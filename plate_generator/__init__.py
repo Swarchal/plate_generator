@@ -1,1 +1,2 @@
-from plate_generator.plate_generator import *
+from plate_generator.core import *
+from plate_generator.generator import generator
