@@ -92,7 +92,7 @@ class Plate:
         return self
 
 
-def get_sigma(sigma: float, low=0.1, high=5) -> float:
+def get_sigma(sigma: Optional[float], low=0.1, high=5) -> float:
     """
     Automatically generate a sigma value if missing (None).
     If sigma is not missing, then simply return the input value.
