@@ -2,7 +2,6 @@
 module docstring
 
 author: Scott Warchal
-date  : 2019-02-07
 """
 
 import random
@@ -12,20 +11,21 @@ import plate_generator
 
 
 ALL_PLATE_FUNCTIONS = [
-    (plate_generator.normal_plate, "random"),
-    (plate_generator.uniform_plate, "random"),
-    (plate_generator.lognormal_plate, "random"),
-    (plate_generator.edge_plate, "edge"),
-    (plate_generator.row_plate, "row"),
-    (plate_generator.column_plate, "column"),
-    (plate_generator.single_checker_plate, "single_checker"),
-    (plate_generator.quad_checker_plate, "quad checker"),
-    (plate_generator.h_grad_plate, "horizontal_gradient"),
-    (plate_generator.v_grad_plate, "vertical_gradient")
+    (plate_generator.normal_plate, "random", 0),
+    (plate_generator.uniform_plate, "random", 0),
+    (plate_generator.lognormal_plate, "random", 0),
+    (plate_generator.edge_plate, "edge", 1),
+    (plate_generator.row_plate, "row", 2),
+    (plate_generator.column_plate, "column", 3),
+    (plate_generator.single_checker_plate, "single_checker", 4),
+    (plate_generator.quad_checker_plate, "quad checker", 5),
+    (plate_generator.h_grad_plate, "horizontal_gradient", 6),
+    (plate_generator.v_grad_plate, "vertical_gradient", 7)
     # TODO:
     # (plate_generator.bleedthrough_plate, "bleedthrough"),
     # (plate_genertor.snake_plate, "snake")
 ]
+
 
 
 def generator(n :int, size=1536, effects="all", **kwargs):
@@ -54,23 +54,23 @@ def generator(n :int, size=1536, effects="all", **kwargs):
     else:
         # create new plate_functions
         raise NotImplementedError
-    plate_tuple = namedtuple("output", ["plate", "label"])
+    plate_tuple = namedtuple("output", ["plate", "label", "int"])
     if isinstance(size, int):
         # use size directly, much quicker than checking the type
         # of `size` each iteration
         for i in range(n):
-            random_effect = random.sample(range(n_types_of_effects), 1)[0]
-            effect_func, effect_name = plate_functions[random_effect]
+            random_effect = random.sample(ALL_PLATE_FUNCTIONS, 1)[0]
+            effect_func, effect_name, effect_int = random_effect
             effect_plate = effect_func(plate=size, **kwargs)
-            yield plate_tuple(effect_plate, effect_name)
+            yield plate_tuple(effect_plate, effect_name, effect_int)
     elif size in ["either", "both"]:
         for i in range(n):
+            random_effect = random.sample(ALL_PLATE_FUNCTIONS, 1)[0]
+            effect_func, effect_name, effect_int = random_effect
             # randomly sample size at each itertion
             size = random.sample([384, 1536], 1)[0]
-            random_effect = random.sample(range(n_types_of_effects), 1)[0]
-            effect_func, effect_name = plate_functions[random_effect]
             effect_plate = effect_func(plate=size, **kwargs)
-            yield plate_tuple(effect_plate, effect_name)
+            yield plate_tuple(effect_plate, effect_name, effect_int)
     else:
         raise ValueError
 
