@@ -6,7 +6,7 @@ date  : 2019-01-31
 """
 
 import random
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 
 import numpy as np
 
@@ -155,7 +155,7 @@ def add_noise(input_plate: Plate,
     """
     # generate noise in the same shape as input_plate
     sigma = get_sigma(sigma, **kwargs)
-    noise = np.random.normal(loc=0, scale=sigma, shape=input_plate.shape)
+    noise = np.random.normal(loc=0, scale=sigma, size=input_plate.shape)
     # add noise to existing data in input_plate
     input_plate.data = input_plate.data + noise
     return input_plate
