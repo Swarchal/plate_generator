@@ -71,3 +71,12 @@ def test_generator_combined():
         if len(output.label) > 1:
             combined += 1
     assert combined > 0
+
+
+def test_generator_combined_correct_n():
+    count = 0
+    n = 1000
+    for i in plate_generator.generator_combined(n=n):
+        count += 1
+    assert count == n
+
