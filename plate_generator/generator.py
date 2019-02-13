@@ -12,21 +12,22 @@ import operator
 import numpy as np
 import plate_generator
 
+func_tuple = namedtuple("FuncTuple", ["func", "label", "int"])
 
 ALL_PLATE_FUNCTIONS = [
-    (plate_generator.normal_plate,         "random",              0),
-    (plate_generator.uniform_plate,        "random",              0),
-    (plate_generator.lognormal_plate,      "random",              0),
-    (plate_generator.edge_plate,           "edge",                1),
-    (plate_generator.row_plate,            "row",                 2),
-    (plate_generator.column_plate,         "column",              3),
-    (plate_generator.single_checker_plate, "single_checker",      4),
-    (plate_generator.quad_checker_plate,   "quad checker",        5),
-    (plate_generator.h_grad_plate,         "horizontal_gradient", 6),
-    (plate_generator.v_grad_plate,         "vertical_gradient",   7)
+    func_tuple(plate_generator.normal_plate,         "random",              0),
+    func_tuple(plate_generator.uniform_plate,        "random",              0),
+    func_tuple(plate_generator.lognormal_plate,      "random",              0),
+    func_tuple(plate_generator.edge_plate,           "edge",                1),
+    func_tuple(plate_generator.row_plate,            "row",                 2),
+    func_tuple(plate_generator.column_plate,         "column",              3),
+    func_tuple(plate_generator.single_checker_plate, "single_checker",      4),
+    func_tuple(plate_generator.quad_checker_plate,   "quad checker",        5),
+    func_tuple(plate_generator.h_grad_plate,         "horizontal_gradient", 6),
+    func_tuple(plate_generator.v_grad_plate,         "vertical_gradient",   7)
     # TODO:
-    # (plate_generator.bleedthrough_plate, "bleedthrough"),
-    # (plate_generator.snake_plate,         "snake")
+    # func_tuple(plate_generator.bleedthrough_plate, "bleedthrough",        8),
+    # func_tuple(plate_generator.snake_plate,         "snake",              9)
 ]
 
 
@@ -128,6 +129,7 @@ def generator_combined(n, size=1536, effects="all", op="+",
                 effect_func, effect_name, effect_int = random_effect
                 effect_plate = effect_func(plate=size, **kwargs)
                 yield plate_tuple(effect_plate, [effect_name], [effect_int])
+                count += 1
             else:
                 # FIXME: this is too clever: I won't understand it in 2 weeks
                 #
@@ -136,22 +138,21 @@ def generator_combined(n, size=1536, effects="all", op="+",
                 random_effect_list = random.sample(
                         ALL_PLATE_FUNCTIONS, n_combinations
                 )
-                # now have a list of tuples
-                # TODO: have ALL_PLATE_FUNCTIONS be a list of namedtuples
-                #       so we don't have cryptic indexing here
-                funcs  = [i[0] for i in random_effect_list]
+                # now have a list of namedtuples
+                funcs  = [i.func for i in random_effect_list]
                 plates = [f(plate=size, **kwargs) for f in funcs]
                 # add or multiple plates together
                 effect_plate  = reduce(lambda x, y: op(x, y), plates)
-                effect_labels = [i[1] for i in random_effect_list]
-                effect_ints   = [i[2] for i in random_effect_list]
-                yield plate_tuple(effect_plate, effect_labels, effect_ints)
-            count += 1
+                effect_labels = [i.label for i in random_effect_list]
+                # if random is one of the effects to be combined
+                # then skip this current iteration
+                if "random" not in effect_labels:
+                    effect_ints   = [i.int for i in random_effect_list]
+                    yield plate_tuple(effect_plate, effect_labels, effect_ints)
+                    count += 1
     elif size in ["either", "both"] or isinstance(size, list):
-        while count < n:
-            # TODO
-            pass
-            count += 1
+        # TODO: make this
+        raise NotImplementedError
     else:
         raise TypeError
 
