@@ -1,8 +1,10 @@
 """
 module docstring
 """
+from collections import namedtuple
 
 import plate_generator
+
 
 def test_generator():
     my_generator = plate_generator.generator(n=10)
@@ -54,3 +56,19 @@ def test_generator_select_size():
     for output in plate_generator.generator(n=1000, size=1536):
         assert output.plate.size == 1536
 
+
+def test_generator_combined():
+    my_generator = plate_generator.generator_combined(n=1000)
+    for output in my_generator:
+        assert isinstance(output.plate, plate_generator.core.Plate)
+        assert isinstance(output.label, (list, str))
+        assert isinstance(output.int, (list, int))
+    my_generator = plate_generator.generator_combined(n=1000)
+    # check that at least some of the plates have been combined
+    combined = 0
+    for output in my_generator:
+        if isinstance(output.label, list):
+            assert isinstance(output.int, list)
+            assert len(output.int) > 1
+            combined += 1
+    assert combined > 0
