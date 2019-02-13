@@ -127,7 +127,7 @@ def generator_combined(n, size=1536, effects="all", op="+",
                 random_effect = random.sample(ALL_PLATE_FUNCTIONS, 1)[0]
                 effect_func, effect_name, effect_int = random_effect
                 effect_plate = effect_func(plate=size, **kwargs)
-                yield plate_tuple(effect_plate, effect_name, effect_int)
+                yield plate_tuple(effect_plate, [effect_name], [effect_int])
             else:
                 # FIXME: this is too clever: I won't understand it in 2 weeks
                 #
@@ -138,7 +138,7 @@ def generator_combined(n, size=1536, effects="all", op="+",
                 )
                 # now have a list of tuples
                 # TODO: have ALL_PLATE_FUNCTIONS be a list of namedtuples
-                #       so we don't have cryptic indexing her
+                #       so we don't have cryptic indexing here
                 funcs  = [i[0] for i in random_effect_list]
                 plates = [f(plate=size, **kwargs) for f in funcs]
                 # add or multiple plates together

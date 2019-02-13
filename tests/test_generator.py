@@ -61,14 +61,13 @@ def test_generator_combined():
     my_generator = plate_generator.generator_combined(n=1000)
     for output in my_generator:
         assert isinstance(output.plate, plate_generator.core.Plate)
-        assert isinstance(output.label, (list, str))
-        assert isinstance(output.int, (list, int))
+        assert isinstance(output.label, list)
+        assert isinstance(output.int, list)
     my_generator = plate_generator.generator_combined(n=1000)
     # check that at least some of the plates have been combined
     combined = 0
     for output in my_generator:
-        if isinstance(output.label, list):
-            assert isinstance(output.int, list)
-            assert len(output.int) > 1
+        assert len(output.label) == len(output.int)
+        if len(output.label) > 1:
             combined += 1
     assert combined > 0
