@@ -2,6 +2,7 @@ import os
 import plate_generator
 
 import numpy as np
+import pytest
 
 
 CURRENT_PATH = os.path.dirname(__file__)
@@ -253,3 +254,50 @@ def test_std():
     np_output = plate.data.std()
     assert isinstance(output, float)
     assert output == np_output
+
+
+def test_raises_TypeError():
+    plate = plate_generator.normal_plate()
+    with pytest.raises(TypeError):
+        tmp = plate + "string"
+        tmp = plate + [1, 2, 3, 4]
+        tmp = plate + (1, 2, 3, 4)
+
+
+def test_operations_are_commutative():
+    """e.g plate + 1 == 1 + plate"""
+    eps = 1e-6
+    my_plate = plate_generator.normal_plate()
+    # should run without error
+    add_plate_0 = my_plate + 1
+    add_plate_1 = 1 + my_plate
+    assert (abs(add_plate_0.data - add_plate_1.data) < eps).all()
+    array = np.random.normal(size=my_plate.shape)
+    add_plate_2 = my_plate + array
+    add_plate_3 = array + my_plate
+    assert (abs(add_plate_2.data - add_plate_3.data) < eps).all()
+    sub_plate_0 = my_plate - 1
+    sub_plate_1 = 1 - my_plate
+    assert (abs(sub_plate_0.data - sub_plate_1.data) < eps).all()
+    array_ones = np.ones(my_plate.shape)
+    sub_plate_2 = my_plate - array_ones
+    sub_plate_3 = array_ones - my_plate
+    assert (abs(sub_plate_2.data - sub_plate_3.data) < eps).all()
+    mul_plate_0 = my_plate * 3
+    mul_plate_1 = 3 * my_plate
+    assert (abs(mul_plate_0.data - mul_plate_1.data) < eps).all()
+    mul_array = np.full(my_plate.shape, 3)
+    mul_plate_2 = my_plate * mul_array
+    mul_plate_3 = mul_array * my_plate
+    assert (abs(mul_plate_2.data - mul_plate_3.data) < eps).all()
+    div_plate_0 = my_plate / 10.0
+    div_plate_1 = 10.0 / my_plate
+    assert (abs(div_plate_0.data - div_plate_1.data) < eps).all()
+    div_array = np.full_like(my_plate, 10.0)
+    div_plate_2 = my_plate / div_array
+    div_plate_3 = div_array / my_plate
+    assert (abs(div_plate_2.data - div_plate_3.data) < eps).all()
+    floor_div_plate_0 = my_plate // 2
+    floor_div_plate_1 = 2 // my_plate
+    assert (abs(floor_div_plate_0.data - floor_div_plate_1.data) < eps).all()
+

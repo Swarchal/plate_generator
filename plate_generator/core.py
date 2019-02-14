@@ -26,6 +26,10 @@ class Plate:
     def ndim(self):
         return self.data.ndim
 
+    @property
+    def dtype(self):
+        return self.data.dtype
+
     def __str__(self):
         return self.data
 
@@ -65,12 +69,23 @@ class Plate:
             raise TypeError
         return Plate(data=new_data, size=self.size)
 
-    # FIXME: these are not working as expected
+    def __floordiv__(self, other):
+        if isinstance(other, Plate):
+            new_data = self.data // other.data
+        elif isinstance(other, (np.ndarray, int, float)):
+            new_data = self.data // other
+        else:
+            raise TypeError
+        return Plate(data=new_data, size=self.size)
+
     # this makes the operators commutative
     __rmul__ = __mul__
-    __rdiv__ = __truediv__
+    __rtruediv__ = __truediv__
+    __rfloordiv__ = __floordiv__
     __radd__ = __add__
     __rsub__ = __sub__
+    ## this is needed for commutative numpy operations
+    __array_ufunc__ = None
 
     def mean(self):
         return self.data.mean()
