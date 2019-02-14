@@ -1,9 +1,10 @@
 """
 module docstring
 """
-from collections import namedtuple
+from collections import namedtuple, Counter
 
 import plate_generator
+import pytest
 
 
 def test_generator():
@@ -79,4 +80,55 @@ def test_generator_combined_correct_n():
     for i in plate_generator.generator_combined(n=n):
         count += 1
     assert count == n
+
+
+def test_generator_combined_max_combinations():
+    max_combinations = 3
+    my_generator = plate_generator.generator_combined(
+        n=1000,
+        max_combinations=max_combinations
+    )
+    for output in my_generator:
+        assert len(output.label) <= max_combinations
+    ###########
+    max_combinations = 1
+    my_generator = plate_generator.generator_combined(
+        n=1000,
+        max_combinations=max_combinations
+    )
+    for output in my_generator:
+        assert len(output.label) <= max_combinations
+    #####
+    max_combinations = 5
+    my_generator = plate_generator.generator_combined(
+        n=1000,
+        max_combinations=max_combinations
+    )
+    for output in my_generator:
+        assert len(output.label) <= max_combinations
+
+
+def test_generator_combined_size():
+    size = 384
+    my_generator = plate_generator.generator_combined(1000, size=384)
+    for output in my_generator:
+        assert output.plate.size == 384
+
+
+def test_generator_combined_raises_invalid_op():
+    with pytest.raises(ValueError):
+        # NOTE: doesn't error on creating the variable, only when
+        # actually iterating through the generator
+        my_generator = plate_generator.generator_combined(100, op="//")
+        for output in my_generator:
+            pass
+
+
+def test_generator_combined_random_size():
+    my_generator = plate_generator.generator_combined(1000, size="either")
+    sizes = []
+    for plate in my_generator:
+        sizes.append(plate.plate.size)
+    assert len(Counter(sizes)) == 2
+
 
