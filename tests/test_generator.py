@@ -2,6 +2,7 @@
 module docstring
 """
 from collections import namedtuple, Counter
+from time import time
 
 import plate_generator
 import pytest
@@ -131,4 +132,31 @@ def test_generator_combined_random_size():
         sizes.append(plate.plate.size)
     assert len(Counter(sizes)) == 2
 
+
+def test_generator_is_not_too_slow():
+    # 1500 plates per second minimum
+    time_limit = 10
+    n = 15000
+    my_generator = plate_generator.generator(n)
+    time_start = time()
+    for plate in my_generator:
+        _ = plate
+    time_end = time()
+    time_taken = abs(time_end - time_start)
+    print(time_taken)
+    assert time_taken <= time_limit
+
+
+def test_generator_combined_is_not_too_slow():
+    # 1500 plates per second minimum
+    time_limit = 10
+    n = 15000
+    my_generator = plate_generator.generator_combined(n)
+    time_start = time()
+    for plate in my_generator:
+        _ = plate
+    time_end = time()
+    time_taken = abs(time_end - time_start)
+    print(time_taken)
+    assert time_taken <= time_limit
 

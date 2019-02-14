@@ -33,8 +33,8 @@ ALL_PLATE_FUNCTIONS = [
     func_tuple(core.h_grad_plate,         "horizontal_gradient", 6),
     func_tuple(core.v_grad_plate,         "vertical_gradient",   7)
     # TODO:
-    # func_tuple(plate_generator.bleedthrough_plate, "bleedthrough",        8),
-    # func_tuple(plate_generator.snake_plate,         "snake",              9)
+    # func_tuple(core.bleedthrough_plate, "bleedthrough",        8),
+    # func_tuple(core.snake_plate,         "snake",              9)
 ]
 
 
@@ -57,6 +57,7 @@ def generator(n: int, size=1536, effects="all", **kwargs) -> Generator:
     A generator which returns a named tuple:
         output.plate : Plate class
         output.label : string, name of plate effect
+        output.int   : index of label
     """
     sizes = {384, 1536}
     if effects != "all":
@@ -170,7 +171,10 @@ def create_output_tuple(size, listify=False,**kwargs):
         additional arguments to core plate generating functions
     Returns:
     --------
-    namedtuple(core.Plate, name, int)
+    A generator which returns a named tuple:
+        output.plate : Plate class
+        output.label : string, name of plate effect
+        output.int   : index of label
     """
     plate_tuple = namedtuple("output", ["plate", "label", "int"])
     random_effect = random.sample(ALL_PLATE_FUNCTIONS, 1)[0]
