@@ -206,3 +206,11 @@ def test_generator_effect_list():
                                    "horizontal_gradient",
                                    "vertical_gradient")
 
+
+def test_generator_combined_for_duplicate_classes():
+    my_gen = plate_generator.generator_combined(n=10000)
+    for i in my_gen:
+        if len(i.plate.name) > 1:
+            assert "random" not in i.plate.name
+            assert len(i.plate.name) == len(set(i.plate.name))
+
