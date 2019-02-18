@@ -43,8 +43,8 @@ class Plate:
     def __add__(self, other):
         if isinstance(other, Plate):
             new_data = self.data + other.data
-            new_name = []
-            new_name.extend([self.name, other.name])
+            new_name = self.name
+            new_name.extend(other.name)
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data + other
             new_name = self.name
@@ -435,7 +435,7 @@ def h_grad_plate(plate: int = 384,
         effect_plate = np.flip(effect_plate, axis=1)
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, name="hortizontal_gradient", size=plate)
+    return Plate(data=data, name="horizontal_gradient", size=plate)
 
 
 def v_grad_plate(plate: int = 384,

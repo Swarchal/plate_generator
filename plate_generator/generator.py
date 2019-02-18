@@ -19,22 +19,22 @@ from .core import Plate
 __all__ = ["generator", "generator_combined"]
 
 
-func_tuple = namedtuple("FuncTuple", ["func", "label", "int"])
+func_tuple = namedtuple("FuncTuple", ["func", "int"])
 
 ALL_PLATE_FUNCTIONS = [
-    func_tuple(core.normal_plate,         "random",              0),
-    func_tuple(core.uniform_plate,        "random",              0),
-    func_tuple(core.lognormal_plate,      "random",              0),
-    func_tuple(core.edge_plate,           "edge",                1),
-    func_tuple(core.row_plate,            "row",                 2),
-    func_tuple(core.column_plate,         "column",              3),
-    func_tuple(core.single_checker_plate, "single_checker",      4),
-    func_tuple(core.quad_checker_plate,   "quad checker",        5),
-    func_tuple(core.h_grad_plate,         "horizontal_gradient", 6),
-    func_tuple(core.v_grad_plate,         "vertical_gradient",   7)
+    func_tuple(core.normal_plate,         0),
+    func_tuple(core.uniform_plate,        0),
+    func_tuple(core.lognormal_plate,      0),
+    func_tuple(core.edge_plate,           1),
+    func_tuple(core.row_plate,            2),
+    func_tuple(core.column_plate,         3),
+    func_tuple(core.single_checker_plate, 4),
+    func_tuple(core.quad_checker_plate,   5),
+    func_tuple(core.h_grad_plate,         6),
+    func_tuple(core.v_grad_plate,         7)
     # TODO:
-    # func_tuple(core.bleedthrough_plate, "bleedthrough",        8),
-    # func_tuple(core.snake_plate,         "snake",              9)
+    # func_tuple(core.bleedthrough_plate, 8),
+    # func_tuple(core.snake_plate,        9)
 ]
 
 
@@ -56,19 +56,16 @@ def generator(n: int, size=1536, effects="all", **kwargs) -> Generator:
     --------
     A generator which returns a named tuple:
         output.plate : Plate class
-        output.label : string, name of plate effect
         output.int   : index of label
     """
     sizes = {384, 1536}
-    if effects != "all":
-        raise NotImplementedError
     for i in range(n):
         # NOTE: if needed this can be sped up by creating separate loops
         # for either plate option (known or random), rather than checking
         # the value of size at each iteration, but it will make the code
         # more complicated.
         plate_size = size if size in sizes else random.sample(sizes, 1)[0]
-        yield create_output_tuple(plate_size, **kwargs)
+        yield create_output_tuple(plate_size, effects, **kwargs)
 
 
 def generator_combined(n: int,
@@ -107,8 +104,10 @@ def generator_combined(n: int,
         output.label : string, name of plate effect
     """
     sizes = {384, 1536}
-    if effects != "all":
-        raise NotImplementedError
+    if isinstance(effects, list):
+        plate_functions = [func_tuple(f, i) for i, f in enumerate(effects)]
+    elif effects == "all":
+        plate_functions = ALL_PLATE_FUNCTIONS
     # set operator based on function argument
     if op == "+":
         op_func = operator.add
@@ -116,7 +115,7 @@ def generator_combined(n: int,
         op_func = operator.mul
     else:
         raise ValueError("invalid operator, options: ['+', '*']")
-    plate_tuple = namedtuple("output", ["plate", "label", "int"])
+    plate_tuple = namedtuple("output", ["plate", "int"])
     prob_dist = np.random.zipf(zeta, 1000)
     # trim probability distribution function (prob_dist) to a maximum of
     # `max_combinations`
@@ -130,31 +129,30 @@ def generator_combined(n: int,
             # then just get a single plate from the generator
             # but put the labels and ints inside a list so that all the
             # tuples returned by the generator are consistent
-            yield create_output_tuple(plate_size, listify=True, **kwargs)
+            yield create_output_tuple(plate_size, effects, listify=True, **kwargs)
             count += 1
         else:
-            # FIXME: this is too clever: I won't understand it in 2 weeks
             random_effect_list = random.sample(
-                ALL_PLATE_FUNCTIONS, n_combinations
+                plate_functions, n_combinations
             )
             # now have a list of namedtuples
             funcs  = [i.func for i in random_effect_list]
             plates = [f(plate=plate_size, **kwargs) for f in funcs]
             # add or multiple plates together
             effect_plate  = reduce(lambda x, y: op_func(x, y), plates)
-            effect_labels = [i.label for i in random_effect_list]
             # if random is an effect to be combined then skip this current
             # iteration and don't increment the counter.
             # otherwise you end up with a multi-label class that includes
             # "random" as one of the classes, which is just the non-random
             # classes with more noise, which is not useful as a label
-            if "random" not in effect_labels:
+            print(effect_plate.name)
+            if "random" not in effect_plate.name:
                 effect_ints   = [i.int for i in random_effect_list]
-                yield plate_tuple(effect_plate, effect_labels, effect_ints)
+                yield plate_tuple(effect_plate, effect_ints)
                 count += 1
 
 
-def create_output_tuple(size, listify=False,**kwargs):
+def create_output_tuple(size, effects, listify=False, **kwargs):
     """
     Creates an output tuple containing a plate, labels,
     and integer labels.
@@ -173,15 +171,19 @@ def create_output_tuple(size, listify=False,**kwargs):
     --------
     A generator which returns a named tuple:
         output.plate : Plate class
-        output.label : string, name of plate effect
         output.int   : index of label
     """
-    plate_tuple = namedtuple("output", ["plate", "label", "int"])
-    random_effect = random.sample(ALL_PLATE_FUNCTIONS, 1)[0]
-    effect_func, effect_name, effect_int = random_effect
+    if effects == "all":
+        plate_functions = ALL_PLATE_FUNCTIONS
+    elif isinstance(effects, list):
+        plate_functions = [func_tuple(f, i) for i, f in enumerate(effects)]
+    else:
+        raise ValueError
+    plate_tuple = namedtuple("output", ["plate", "int"])
+    random_effect = random.sample(plate_functions, 1)[0]
+    effect_func, effect_int = random_effect
     effect_plate = effect_func(plate=size, **kwargs)
     if listify:
-        effect_name = [effect_name]
         effect_int = [effect_int]
-    return plate_tuple(effect_plate, effect_name, effect_int)
+    return plate_tuple(effect_plate,  effect_int)
 
