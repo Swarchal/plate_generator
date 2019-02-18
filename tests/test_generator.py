@@ -175,6 +175,20 @@ def test_generator_combined_effect_list():
         assert output.int[0] in [0, 1, 2]
 
 
+def test_generator_combined_effect_list_op():
+    funcs_to_use = [
+        plate_generator.core.normal_plate,
+        plate_generator.core.h_grad_plate,
+        plate_generator.core.v_grad_plate
+    ]
+    my_generator = plate_generator.generator_combined(
+            n=1000, effects=funcs_to_use, op="*"
+    )
+    for output in my_generator:
+        # always returned as a list, so get the first element
+        assert output.int[0] in [0, 1, 2]
+
+
 def test_generator_effect_list():
     funcs_to_use = [
         plate_generator.core.normal_plate,
