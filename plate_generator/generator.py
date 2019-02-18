@@ -5,7 +5,7 @@ author: Scott Warchal
 """
 
 import random
-from collections import namedtuple
+from collections import namedtuple, Counter
 from functools import reduce
 import operator
 from typing import Tuple, List, Union, Generator
@@ -145,11 +145,12 @@ def generator_combined(n: int,
             # otherwise you end up with a multi-label class that includes
             # "random" as one of the classes, which is just the non-random
             # classes with more noise, which is not useful as a label
-            print(effect_plate.name)
             if "random" not in effect_plate.name:
-                effect_ints   = [i.int for i in random_effect_list]
-                yield plate_tuple(effect_plate, effect_ints)
-                count += 1
+                # not worth duplicating an effect and calling a multi-label
+                if Counter(effect_plate.name).most_common()[0][1] < 2:
+                    effect_ints   = [i.int for i in random_effect_list]
+                    yield plate_tuple(effect_plate, effect_ints)
+                    count += 1
 
 
 def create_output_tuple(size, effects, listify=False, **kwargs):
