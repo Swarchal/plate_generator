@@ -14,13 +14,20 @@ import numpy as np
 class Plate:
     """plate class"""
 
-    def __init__(self, data: np.ndarray, size: int = 385):
+    def __init__(self, data: np.ndarray, name, size: int = 385):
         if size not in [384, 1536]:
             raise ValueError("invalid size. options: [384, 1536]")
         self.data = data
         self.size = size
         # shape is (height, width) following numpy convention
         self.shape = (16, 24) if size == 384 else (32, 48)
+        # name has to be in a list as plates may be combined
+        if isinstance(name, str):
+            self.name = [name]
+        elif isinstance(name, list):
+            self.name = name
+        else:
+            raise ValueError
 
     @property
     def ndim(self):
@@ -36,47 +43,62 @@ class Plate:
     def __add__(self, other):
         if isinstance(other, Plate):
             new_data = self.data + other.data
+            new_name = []
+            new_name.extend([self.name, other.name])
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data + other
+            new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, size=self.size)
+        return Plate(data=new_data, name=new_name, size=self.size)
 
     def __sub__(self, other):
         if isinstance(other, Plate):
             new_data = self.data - other.data
+            new_name = []
+            new_name.extend([self.name, other.name])
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data - other
+            new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, size=self.size)
+        return Plate(data=new_data, name=new_name, size=self.size)
 
     def __mul__(self, other):
         if isinstance(other, Plate):
             new_data = self.data * other.data
+            new_name = []
+            new_name.extend([self.name, other.name])
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data * other
+            new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, size=self.size)
+        return Plate(data=new_data, name=new_name, size=self.size)
 
     def __truediv__(self, other):
         if isinstance(other, Plate):
             new_data = self.data / other.data
+            new_name = []
+            new_name.extend([self.name, other.name])
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data / other
+            new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, size=self.size)
+        return Plate(data=new_data, name=new_name, size=self.size)
 
     def __floordiv__(self, other):
         if isinstance(other, Plate):
             new_data = self.data // other.data
+            new_name = []
+            new_name.extend([self.name, other.name])
         elif isinstance(other, (np.ndarray, int, float)):
             new_data = self.data // other
+            new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, size=self.size)
+        return Plate(data=new_data, name=new_name, size=self.size)
 
     # this makes the operators commutative
     __rmul__ = __mul__
@@ -99,7 +121,7 @@ class Plate:
         and standard deviation of 1
         """
         norm_data = (self.data - self.mean()) / self.std()
-        return Plate(data=norm_data, size=self.size)
+        return Plate(data=norm_data, name=self.name, size=self.size)
 
     def _normalise(self):
         """in-place normalisation"""
@@ -149,7 +171,7 @@ def size2shape(size: int) -> Tuple[int, int]:
 def normalise(x: Plate) -> Plate:
     """normalise (standard scale) a numpy array"""
     x.data = (x.data - x.data.mean()) / x.data.std()
-    return Plate(data=x.data, size=x.size)
+    return Plate(data=x.data, name=x.name, size=x.size)
 
 
 def add_noise(input_plate: Plate,
@@ -194,7 +216,7 @@ def normal_plate(plate: int = 384,
     sigma = get_sigma(sigma)
     shape = size2shape(plate)
     data = np.random.normal(loc=0, scale=sigma, size=shape)
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="random", size=plate)
 
 
 def uniform_plate(plate: int = 384, low=0.1, high=3) -> Plate:
@@ -214,7 +236,7 @@ def uniform_plate(plate: int = 384, low=0.1, high=3) -> Plate:
     """
     shape = size2shape(plate)
     data = np.random.uniform(low, high, size=shape)
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="random", size=plate)
 
 
 def lognormal_plate(plate: int = 384,
@@ -235,7 +257,7 @@ def lognormal_plate(plate: int = 384,
     sigma = get_sigma(sigma)
     shape = size2shape(plate)
     data = np.random.lognormal(mean=0, sigma=sigma, size=shape)
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="random", size=plate)
 
 
 def edge_plate(plate: int = 384,
@@ -274,7 +296,7 @@ def edge_plate(plate: int = 384,
         raise NotImplementedError
     #    noise_plate = 1 / noise_plate
     data = edge_plate + noise_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="edge", size=plate)
 
 
 def row_plate(plate: int = 384,
@@ -299,7 +321,7 @@ def row_plate(plate: int = 384,
     effect_plate = np.ones(shape) * 1.5
     effect_plate[::2, :] = 0
     data = effect_plate + noise_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="row", size=plate)
 
 
 def column_plate(plate: int = 384,
@@ -324,7 +346,7 @@ def column_plate(plate: int = 384,
     effect_plate = np.ones(shape) * 1.5
     effect_plate[:, ::2] = 0
     data = effect_plate + noise_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="column", size=plate)
 
 
 def single_checker_plate(plate: int = 384,
@@ -348,7 +370,7 @@ def single_checker_plate(plate: int = 384,
     effect_plate[::2, ::2] = 0
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="single_checker", size=plate)
 
 
 def quad_checker_plate(plate: int = 384,
@@ -378,7 +400,7 @@ def quad_checker_plate(plate: int = 384,
     )
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + checker_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="quad_checker", size=plate)
 
 
 def h_grad_plate(plate: int = 384,
@@ -413,7 +435,7 @@ def h_grad_plate(plate: int = 384,
         effect_plate = np.flip(effect_plate, axis=1)
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="hortizontal_gradient", size=plate)
 
 
 def v_grad_plate(plate: int = 384,
@@ -447,7 +469,7 @@ def v_grad_plate(plate: int = 384,
         effect_plate = np.flip(effect_plate, axis=0)
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, size=plate)
+    return Plate(data=data, name="vertical_gradient", size=plate)
 
 
 def bleed_through_plate(plate: int = 384,
