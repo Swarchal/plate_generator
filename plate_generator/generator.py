@@ -59,7 +59,7 @@ def generator(n: int, size=1536, effects="all", **kwargs) -> Generator:
         output.int   : index of label
     """
     sizes = {384, 1536}
-    for i in range(n):
+    for _ in range(n):
         # NOTE: if needed this can be sped up by creating separate loops
         # for either plate option (known or random), rather than checking
         # the value of size at each iteration, but it will make the code
@@ -147,10 +147,14 @@ def generator_combined(n: int,
             # classes with more noise, which is not useful as a label
             if "random" not in effect_plate.name:
                 # not worth duplicating an effect and calling a multi-label
-                if Counter(effect_plate.name).most_common()[0][1] < 2:
-                    effect_ints   = [i.int for i in random_effect_list]
+                if not_duplicated_effect(effect_plate):
+                    effect_ints = [i.int for i in random_effect_list]
                     yield plate_tuple(effect_plate, effect_ints)
                     count += 1
+
+
+def not_duplicated_effect(plate: Plate) -> bool:
+    return Counter(plate.name).most_common()[0][1] < 2
 
 
 def create_output_tuple(size, effects, listify=False, **kwargs):
@@ -181,10 +185,7 @@ def create_output_tuple(size, effects, listify=False, **kwargs):
     else:
         raise ValueError
     plate_tuple = namedtuple("output", ["plate", "int"])
-    random_effect = random.sample(plate_functions, 1)[0]
-    effect_func, effect_int = random_effect
-    effect_plate = effect_func(plate=size, **kwargs)
-    if listify:
-        effect_int = [effect_int]
-    return plate_tuple(effect_plate,  effect_int)
-
+    effect = random.sample(plate_functions, 1)[0]
+    effect_plate = effect.func(plate=size, **kwargs)
+    effect_int = [effect.int] if listify else effect.int
+    return plate_tuple(effect_plate, effect_int)
