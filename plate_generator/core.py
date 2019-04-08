@@ -68,8 +68,8 @@ class Plate:
     def __sub__(self, other):
         if isinstance(other, Plate):
             new_data = self.data - other.data
-            new_noise = self.noise + other.noise
-            new_effect = self.effect + other.effect
+            new_noise = self.noise - other.noise
+            new_effect = self.effect - other.effect
             new_name = self.name
             new_name.extend(other.name)
         elif isinstance(other, (np.ndarray, int, float)):
