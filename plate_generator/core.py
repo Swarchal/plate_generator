@@ -5,6 +5,7 @@ author: Scott Warchal
 date  : 2019-01-31
 """
 
+import operator
 import random
 from typing import Tuple, Optional
 import warnings
@@ -15,8 +16,12 @@ import scipy.ndimage
 
 class Plate:
     """plate class"""
-    def __init__(self, data: np.ndarray, name,
-                 noise=None, effect=None, size: int = 385):
+    def __init__(self,
+                 data: np.ndarray,
+                 name: Union[List, str],
+                 noise: Optional[np.array] = None,
+                 effect: Optional[np.array] = None,
+                 size: int = 385):
         if size not in [384, 1536]:
             raise ValueError("invalid size. options: [384, 1536]")
         self.data = data
@@ -34,7 +39,7 @@ class Plate:
         elif isinstance(name, list):
             self.name = name
         else:
-            raise ValueError
+            raise ValueError("name has to be a string or a list")
 
     @property
     def ndim(self):
@@ -47,16 +52,16 @@ class Plate:
     def __str__(self):
         return self.data
 
-    def __add__(self, other):
+    def apply_op(self, other, op):
         if isinstance(other, Plate):
-            new_data = self.data + other.data
-            new_noise = self.noise + other.noise
-            new_effect = self.effect + other.effect
+            new_data = op(self.data, other.data)
+            new_noise = op(self.noise, other.noise)
+            new_effect = op(self.effect, other.effect)
             new_name = self.name
             new_name.extend(other.name)
         elif isinstance(other, (np.ndarray, int, float)):
             warnings.warn("data is no longer a combination of noise & effect")
-            new_data = self.data + other
+            new_data = op(self.data, other)
             new_noise = self.noise
             new_effect = self.effect
             new_name = self.name
@@ -64,78 +69,21 @@ class Plate:
             raise TypeError
         return Plate(data=new_data, noise=new_noise, effect=new_effect,
                      name=new_name, size=self.size)
+
+    def __add__(self, other):
+        return self.apply_op(other, operator.add)
 
     def __sub__(self, other):
-        if isinstance(other, Plate):
-            new_data = self.data - other.data
-            new_noise = self.noise - other.noise
-            new_effect = self.effect - other.effect
-            new_name = self.name
-            new_name.extend(other.name)
-        elif isinstance(other, (np.ndarray, int, float)):
-            warnings.warn("data is no longer a combination of noise & effect")
-            new_data = self.data - other
-            new_noise = self.noise
-            new_effect = self.effect
-            new_name = self.name
-        else:
-            raise TypeError
-        return Plate(data=new_data, noise=new_noise, effect=new_effect,
-                     name=new_name, size=self.size)
+        return self.apply_op(other, operator.sub)
 
     def __mul__(self, other):
-        if isinstance(other, Plate):
-            new_data = self.data * other.data
-            new_noise = self.noise * other.noise
-            new_effect = self.effect * other.effect
-            new_name = self.name
-            new_name.extend(other.name)
-        elif isinstance(other, (np.ndarray, int, float)):
-            warnings.warn("data is no longer a combination of noise & effect")
-            new_data = self.data * other
-            new_noise = self.noise
-            new_effect = self.effect
-            new_name = self.name
-        else:
-            raise TypeError
-        return Plate(data=new_data, noise=new_noise, effect=new_effect,
-                     name=new_name, size=self.size)
+        return self.apply_op(other, operator.mul)
 
     def __truediv__(self, other):
-        if isinstance(other, Plate):
-            new_data = self.data / other.data
-            new_noise = self.noise / other.noise
-            new_effect = self.effect / other.effect
-            new_name = self.name
-            new_name.extend(other.name)
-        elif isinstance(other, (np.ndarray, int, float)):
-            warnings.warn("data is no longer a combination of noise & effect")
-            new_data = self.data / other
-            new_noise = self.noise
-            new_effect = self.effect
-            new_name = self.name
-        else:
-            raise TypeError
-        return Plate(data=new_data, noise=new_noise, effect=new_effect,
-                     name=new_name, size=self.size)
+        return self.apply_op(other, operator.truediv)
 
     def __floordiv__(self, other):
-        if isinstance(other, Plate):
-            new_data = self.data // other.data
-            new_noise = self.noise // other.noise
-            new_effect = self.effect // other.effect
-            new_name = self.name
-            new_name.extend(other.name)
-        elif isinstance(other, (np.ndarray, int, float)):
-            warnings.warn("data is no longer a combination of noise & effect")
-            new_data = self.data // other
-            new_noise = self.noise
-            new_effect = self.effect
-            new_name = self.name
-        else:
-            raise TypeError
-        return Plate(data=new_data, noise=new_noise, effect=new_effect,
-                     name=new_name, size=self.size)
+        return self.apply_op(other, operator.floordiv)
 
     # this makes the operators commutative
     __rmul__ = __mul__
@@ -322,6 +270,14 @@ def lognormal_plate(plate: int = 384,
 def edge_plate(plate: int = 384,
                sigma: Optional[float] = None,
                invert: Optional[bool] = False) -> Plate:
+    """Edge plate, randomly chosen from the 2 edge plate models."""
+    f = random.sample([edge_plate1, edge_plate2], 1)[0]
+    return f(plate, sigma, invert)
+
+
+def edge_plate1(plate: int = 384,
+                sigma: Optional[float] = None,
+                invert: Optional[bool] = False) -> Plate:
     """
     Create a plate with an edge effect.
     Outer two rows/columns should show an effect.
@@ -350,7 +306,7 @@ def edge_plate(plate: int = 384,
     edge_plate[1, 1:-1] = 2  # top inner
     edge_plate[-2, 1:-1] = 2  # bottom inner
     edge_plate[1:-1, 1] = 2  # left inner
-    edge_plate[1:-1, -2] = 2
+    edge_plate[1:-1, -2] = 2  # right inner
     if invert:
         edge_plate = 1 - edge_plate
     data = edge_plate + noise_plate
