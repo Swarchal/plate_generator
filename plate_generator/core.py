@@ -7,7 +7,7 @@ date  : 2019-01-31
 
 import operator
 import random
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 import warnings
 
 import numpy as np
