@@ -12,7 +12,6 @@
 - `plate.effect`: the artefact present on the plate
 - `plate.noise`: the values with *without* any artefact
 
-<img src="/assets/edge_plate_data.png" height="250" align="right"/>
 
 ```python
 import plate_generator
@@ -22,26 +21,27 @@ edge_plate = plate_generator.edge_plate()
 
 plt.imshow(edge_plate.data)
 ```
+<img src="/assets/edge_plate_data.png" height="250" align="center"/>
 
 
-<img src="/assets/row_plate_data.png" height="250" align="right"/>
 
 ```python
 row_plate = plate_generator.row_plate()
 
 plt.imshow(row_plate.data)
 ```
+<img src="/assets/row_plate_data.png" height="250" align="center"/>
 
 Plates can be combined with mathematical operations (`+`, `-`, `*`, `\`, ...)
 
-
-<img src="/assets/combined_plate_data.png" height="250" align="right"/>
 
 ```python
 combined = row_plate + edge_plate
 
 plt.imshow(combined.data)
 ```
+<img src="/assets/combined_data.png" height="250" align="center"/>
+
 
 The artefacts can be separated from the noise.
 
