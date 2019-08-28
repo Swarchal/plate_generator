@@ -629,7 +629,7 @@ def snake_plate(plate: int = 384,
     shape = size2shape(plate)
     effect_plate = np.linspace(0, max_lim, plate)
     if row_wise:
-        effect_plate = effect_shape.reshape(shape)
+        effect_plate = effect_plate.reshape(shape)
         effect_plate[1::2, :] = effect_plate[1::2, ::-1]
     else:  # column-wise
         effect_plate = effect_plate.reshape(shape[::-1]).T
