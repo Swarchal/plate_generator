@@ -223,7 +223,7 @@ def test_normalise_plates():
     # check the inital plate isn't normalised by accident
     assert abs(plate.data.mean()) > EPS
     assert abs(plate.data.std() - 1) > EPS
-    # check the normalised plate has a mean of 0 and std of 1 
+    # check the normalised plate has a mean of 0 and std of 1
     assert abs(plate_norm.data.mean()) < EPS
     assert abs(plate_norm.data.std() - 1) < EPS
 
@@ -235,7 +235,7 @@ def test_normalise_inplace():
     assert abs(plate.data.mean()) > EPS
     assert abs(plate.data.std() - 1) > EPS
     plate._normalise()
-    # check the normalised plate has a mean of 0 and std of 1 
+    # check the normalised plate has a mean of 0 and std of 1
     assert abs(plate.data.mean()) < EPS
     assert abs(plate.data.std() - 1) < EPS
 
@@ -300,4 +300,3 @@ def test_operations_are_commutative():
     floor_div_plate_0 = my_plate // 2
     floor_div_plate_1 = 2 // my_plate
     assert (abs(floor_div_plate_0.data - floor_div_plate_1.data) < eps).all()
-

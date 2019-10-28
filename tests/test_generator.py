@@ -86,24 +86,21 @@ def test_generator_combined_correct_n():
 def test_generator_combined_max_combinations():
     max_combinations = 3
     my_generator = plate_generator.generator_combined(
-        n=1000,
-        max_combinations=max_combinations
+        n=1000, max_combinations=max_combinations
     )
     for output in my_generator:
         assert len(output.plate.name) <= max_combinations
     ###########
     max_combinations = 1
     my_generator = plate_generator.generator_combined(
-        n=1000,
-        max_combinations=max_combinations
+        n=1000, max_combinations=max_combinations
     )
     for output in my_generator:
         assert len(output.plate.name) <= max_combinations
     #####
     max_combinations = 5
     my_generator = plate_generator.generator_combined(
-        n=1000,
-        max_combinations=max_combinations
+        n=1000, max_combinations=max_combinations
     )
     for output in my_generator:
         assert len(output.plate.name) <= max_combinations
@@ -165,11 +162,9 @@ def test_generator_combined_effect_list():
     funcs_to_use = [
         plate_generator.core.normal_plate,
         plate_generator.core.h_grad_plate,
-        plate_generator.core.v_grad_plate
+        plate_generator.core.v_grad_plate,
     ]
-    my_generator = plate_generator.generator_combined(
-            n=1000, effects=funcs_to_use
-    )
+    my_generator = plate_generator.generator_combined(n=1000, effects=funcs_to_use)
     for output in my_generator:
         # always returned as a list, so get the first element
         assert output.int[0] in [0, 1, 2]
@@ -179,10 +174,10 @@ def test_generator_combined_effect_list_op():
     funcs_to_use = [
         plate_generator.core.normal_plate,
         plate_generator.core.h_grad_plate,
-        plate_generator.core.v_grad_plate
+        plate_generator.core.v_grad_plate,
     ]
     my_generator = plate_generator.generator_combined(
-            n=1000, effects=funcs_to_use, op="*"
+        n=1000, effects=funcs_to_use, op="*"
     )
     for output in my_generator:
         # always returned as a list, so get the first element
@@ -193,18 +188,14 @@ def test_generator_effect_list():
     funcs_to_use = [
         plate_generator.core.normal_plate,
         plate_generator.core.h_grad_plate,
-        plate_generator.core.v_grad_plate
+        plate_generator.core.v_grad_plate,
     ]
-    my_generator = plate_generator.generator_combined(
-            n=1000, effects=funcs_to_use
-    )
+    my_generator = plate_generator.generator_combined(n=1000, effects=funcs_to_use)
     for output in my_generator:
         for integer in output.int:
             assert integer in [0, 1, 2]
         for effect_name in output.plate.name:
-            assert effect_name in ("random",
-                                   "horizontal_gradient",
-                                   "vertical_gradient")
+            assert effect_name in ("random", "horizontal_gradient", "vertical_gradient")
 
 
 def test_generator_combined_for_duplicate_classes():
@@ -213,4 +204,3 @@ def test_generator_combined_for_duplicate_classes():
         if len(i.plate.name) > 1:
             assert "random" not in i.plate.name
             assert len(i.plate.name) == len(set(i.plate.name))
-

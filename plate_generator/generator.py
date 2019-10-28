@@ -22,16 +22,16 @@ __all__ = ["generator", "generator_combined"]
 func_tuple = namedtuple("FuncTuple", ["func", "int"])
 
 ALL_PLATE_FUNCTIONS = [
-    func_tuple(core.normal_plate,         0),
-    func_tuple(core.uniform_plate,        0),
-    func_tuple(core.lognormal_plate,      0),
-    func_tuple(core.edge_plate,           1),
-    func_tuple(core.row_plate,            2),
-    func_tuple(core.column_plate,         3),
+    func_tuple(core.normal_plate, 0),
+    func_tuple(core.uniform_plate, 0),
+    func_tuple(core.lognormal_plate, 0),
+    func_tuple(core.edge_plate, 1),
+    func_tuple(core.row_plate, 2),
+    func_tuple(core.column_plate, 3),
     func_tuple(core.single_checker_plate, 4),
-    func_tuple(core.quad_checker_plate,   5),
-    func_tuple(core.h_grad_plate,         6),
-    func_tuple(core.v_grad_plate,         7)
+    func_tuple(core.quad_checker_plate, 5),
+    func_tuple(core.h_grad_plate, 6),
+    func_tuple(core.v_grad_plate, 7)
     # TODO:
     # func_tuple(core.bleedthrough_plate, 8),
     # func_tuple(core.snake_plate,        9)
@@ -68,12 +68,15 @@ def generator(n: int, size=1536, effects="all", **kwargs) -> Generator:
         yield create_output_tuple(plate_size, effects, **kwargs)
 
 
-def generator_combined(n: int,
-                       size: int = 1536,
-                       effects: Union[str, List] = "all",
-                       op: str = "+",
-                       max_combinations: int = 2,
-                       zeta: float = 2.0,**kwargs) -> Generator:
+def generator_combined(
+    n: int,
+    size: int = 1536,
+    effects: Union[str, List] = "all",
+    op: str = "+",
+    max_combinations: int = 2,
+    zeta: float = 2.0,
+    **kwargs
+) -> Generator:
     """
     Generate plates with combined effects, for example a plate with
     an edge_effect + column_effect.
@@ -119,7 +122,7 @@ def generator_combined(n: int,
     prob_dist = np.random.zipf(zeta, 1000)
     # trim probability distribution function (prob_dist) to a maximum of
     # `max_combinations`
-    within_range = (prob_dist <= max_combinations)
+    within_range = prob_dist <= max_combinations
     prob_dist = prob_dist[within_range]
     count = 0
     while count < n:
@@ -132,14 +135,12 @@ def generator_combined(n: int,
             yield create_output_tuple(plate_size, effects, listify=True, **kwargs)
             count += 1
         else:
-            random_effect_list = random.sample(
-                plate_functions, n_combinations
-            )
+            random_effect_list = random.sample(plate_functions, n_combinations)
             # now have a list of namedtuples
-            funcs  = [i.func for i in random_effect_list]
+            funcs = [i.func for i in random_effect_list]
             plates = [f(plate=plate_size, **kwargs) for f in funcs]
             # add or multiple plates together
-            effect_plate  = reduce(lambda x, y: op_func(x, y), plates)
+            effect_plate = reduce(lambda x, y: op_func(x, y), plates)
             # if random is an effect to be combined then skip this current
             # iteration and don't increment the counter.
             # otherwise you end up with a multi-label class that includes

@@ -16,12 +16,15 @@ import scipy.ndimage
 
 class Plate:
     """plate class"""
-    def __init__(self,
-                 data: np.ndarray,
-                 name: Union[List, str],
-                 noise: Optional[np.array] = None,
-                 effect: Optional[np.array] = None,
-                 size: int = 385):
+
+    def __init__(
+        self,
+        data: np.ndarray,
+        name: Union[List, str],
+        noise: Optional[np.array] = None,
+        effect: Optional[np.array] = None,
+        size: int = 385,
+    ):
         if size not in [384, 1536]:
             raise ValueError("invalid size. options: [384, 1536]")
         self.data = data
@@ -67,8 +70,14 @@ class Plate:
             new_name = self.name
         else:
             raise TypeError
-        return Plate(data=new_data, noise=new_noise, effect=new_effect,
-                     name=new_name, size=self.size)
+        plate = Plate(
+            data=new_data,
+            noise=new_noise,
+            effect=new_effect,
+            name=new_name,
+            size=self.size,
+        )
+        return plate
 
     def __add__(self, other):
         return self.apply_op(other, operator.add)
@@ -130,7 +139,7 @@ def get_sigma(sigma: Optional[float], low=0.1, high=5) -> float:
             upper-bound for the sigma value
     Returns:
     ---------
-    float
+    a sigma value
     """
     if sigma is None:
         sigma = np.random.uniform(low, high)
@@ -159,19 +168,17 @@ def normalise(x: Plate) -> Plate:
     return Plate(data=x.data, name=x.name, size=x.size)
 
 
-def _random_edge(num_edges: int,
-                 shape: Tuple[int, int],
-                 sigma: float) -> np.array:
-    """
-    internal function for edge_plate2()
-    """
+def _random_edge(num_edges: int, shape: Tuple[int, int], sigma: float) -> np.array:
+    """internal function for edge_plate2()"""
     assert num_edges in [2, 3, 4], "invalid number of edges"
-    edge_plate = np.full(shape=shape, fill_value=sigma*10)
+    edge_plate = np.full(shape=shape, fill_value=sigma * 10)
     edge_plate[1:-1, 1:-1] = 0
-    possible_edges = [np.index_exp[0,  :],  # top edge
-                      np.index_exp[-1, :],  # bottom edge
-                      np.index_exp[:,  0],  # left edge
-                      np.index_exp[:, -1]]  # right edge
+    possible_edges = [
+        np.index_exp[0, :],  # top edge
+        np.index_exp[-1, :],  # bottom edge
+        np.index_exp[:, 0],  # left edge
+        np.index_exp[:, -1],
+    ]  # right edge
     # if num_edges == 4 then just return the edge_plate
     # otherwise:
     if num_edges in [2, 3]:
@@ -181,8 +188,7 @@ def _random_edge(num_edges: int,
     return edge_plate
 
 
-def add_noise(input_plate: Plate,
-              sigma: Optional[float] = None, **kwargs) -> Plate:
+def add_noise(input_plate: Plate, sigma: Optional[float] = None, **kwargs) -> Plate:
     """
     Add random (normal) noise to a plate.
     Parameters:
@@ -205,8 +211,7 @@ def add_noise(input_plate: Plate,
     return input_plate
 
 
-def normal_plate(plate: int = 384,
-                 sigma: Optional[float] = None) -> Plate:
+def normal_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Random plate from a normal distribution.
     Parameters:
@@ -246,8 +251,7 @@ def uniform_plate(plate: int = 384, low=0.1, high=3) -> Plate:
     return Plate(data=data, noise=data, name="random", size=plate)
 
 
-def lognormal_plate(plate: int = 384,
-                    sigma: Optional[float] = None) -> Plate:
+def lognormal_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Random plate from a log distribution.
     Parameters:
@@ -267,17 +271,17 @@ def lognormal_plate(plate: int = 384,
     return Plate(data=data, noise=data, name="random", size=plate)
 
 
-def edge_plate(plate: int = 384,
-               sigma: Optional[float] = None,
-               invert: Optional[bool] = False) -> Plate:
+def edge_plate(
+    plate: int = 384, sigma: Optional[float] = None, invert: Optional[bool] = False
+) -> Plate:
     """Edge plate, randomly chosen from the 2 edge plate models."""
     f = random.sample([edge_plate1, edge_plate2], 1)[0]
     return f(plate, sigma, invert)
 
 
-def edge_plate1(plate: int = 384,
-                sigma: Optional[float] = None,
-                invert: Optional[bool] = False) -> Plate:
+def edge_plate1(
+    plate: int = 384, sigma: Optional[float] = None, invert: Optional[bool] = False
+) -> Plate:
     """
     Create a plate with an edge effect.
     Outer two rows/columns should show an effect.
@@ -299,7 +303,7 @@ def edge_plate1(plate: int = 384,
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     # outer
     edge_plate[0, :] = 3  # top edge
-    edge_plate[-1, :] = 3   # bottom edge
+    edge_plate[-1, :] = 3  # bottom edge
     edge_plate[:, 0] = 3  # left edge
     edge_plate[1:-1, -1] = 3  # right edge
     # inner
@@ -310,15 +314,18 @@ def edge_plate1(plate: int = 384,
     if invert:
         edge_plate = 1 - edge_plate
     data = edge_plate + noise_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=edge_plate, name="edge", size=plate)
+    return Plate(
+        data=data, noise=noise_plate, effect=edge_plate, name="edge", size=plate
+    )
 
 
-def edge_plate2(plate: int = 384,
-                sigma: Optional[float] = None,
-                spread: Optional[float] = None,
-                invert: Optional[float] = None,
-                randomise_edges: bool = False) -> Plate:
+def edge_plate2(
+    plate: int = 384,
+    sigma: Optional[float] = None,
+    spread: Optional[float] = None,
+    invert: Optional[float] = None,
+    randomise_edges: bool = False,
+) -> Plate:
     """
     Create a plate with an edge effect.
     Use a diffusion model to influence edge wells with values beyond
@@ -352,16 +359,14 @@ def edge_plate2(plate: int = 384,
         # randomly sample spread value
         spread = np.random.uniform(low=1, high=8, size=1)[0]
     # add an outer well on all edges
-    diffuse_shape = [i+2 for i in shape]
+    diffuse_shape = [i + 2 for i in shape]
     if randomise_edges:
         # randomise the number of edges to have an effect
         n_edges = random.sample([2, 3, 4], 1)[0]
-        edge_plate = _random_edge(
-            n_edges, shape=diffuse_shape, sigma=sigma
-        )
+        edge_plate = _random_edge(n_edges, shape=diffuse_shape, sigma=sigma)
     else:
         # all edges will have an edge effect
-        edge_plate = np.full(shape=diffuse_shape, fill_value=sigma*10)
+        edge_plate = np.full(shape=diffuse_shape, fill_value=sigma * 10)
         # set inner wells to zero
         edge_plate[1:-1, 1:-1] = 0
     if invert:
@@ -371,12 +376,12 @@ def edge_plate2(plate: int = 384,
     effect_plate = effect_plate[1:-1, 1:-1]
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = effect_plate + noise_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="edge", size=plate)
+    return Plate(
+        data=data, noise=noise_plate, effect=effect_plate, name="edge", size=plate
+    )
 
 
-def row_plate(plate: int = 384,
-              sigma: Optional[float] = None) -> Plate:
+def row_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Create a plate with row effects.
     With alternating rows of higher/lower values.
@@ -397,12 +402,12 @@ def row_plate(plate: int = 384,
     effect_plate = np.ones(shape) * 1.5
     effect_plate[::2, :] = 0
     data = effect_plate + noise_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="row", size=plate)
+    return Plate(
+        data=data, noise=noise_plate, effect=effect_plate, name="row", size=plate
+    )
 
 
-def column_plate(plate: int = 384,
-                 sigma: Optional[float] = None) -> Plate:
+def column_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Create a plate with column effects.
     With alternating columns of higher/lower values.
@@ -423,12 +428,12 @@ def column_plate(plate: int = 384,
     effect_plate = np.ones(shape) * 1.5
     effect_plate[:, ::2] = 0
     data = effect_plate + noise_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="column", size=plate)
+    return Plate(
+        data=data, noise=noise_plate, effect=effect_plate, name="column", size=plate
+    )
 
 
-def single_checker_plate(plate: int = 384,
-                         sigma: Optional[float] = None) -> Plate:
+def single_checker_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Create a plate with single-well checker effects.
     Parameters:
@@ -448,12 +453,16 @@ def single_checker_plate(plate: int = 384,
     effect_plate[::2, ::2] = 0
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="single_checker", size=plate)
+    return Plate(
+        data=data,
+        noise=noise_plate,
+        effect=effect_plate,
+        name="single_checker",
+        size=plate,
+    )
 
 
-def quad_checker_plate(plate: int = 384,
-                       sigma: Optional[float] = None) -> Plate:
+def quad_checker_plate(plate: int = 384, sigma: Optional[float] = None) -> Plate:
     """
     Create a plate with 4-well checker effects
     Parameters:
@@ -469,23 +478,28 @@ def quad_checker_plate(plate: int = 384,
     """
     sigma = get_sigma(sigma)
     shape = size2shape(plate)
-    half_shape = [i//2 for i in shape]
+    half_shape = [i // 2 for i in shape]
     # expand plate with half-sized up dimensions two-fold in both axes
     # this creates a plate with repeating 4-element blocks
     effect_plate = (
         np.random.normal(loc=0, scale=sigma, size=half_shape)
-            .repeat(2, axis=0)
-            .repeat(2, axis=1)
+        .repeat(2, axis=0)
+        .repeat(2, axis=1)
     )
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="quad_checker", size=plate)
+    return Plate(
+        data=data,
+        noise=noise_plate,
+        effect=effect_plate,
+        name="quad_checker",
+        size=plate,
+    )
 
 
-def h_grad_plate(plate: int = 384,
-                 sigma: Optional[float] = None,
-                 flip: Optional[bool] = None) -> Plate:
+def h_grad_plate(
+    plate: int = 384, sigma: Optional[float] = None, flip: Optional[bool] = None
+) -> Plate:
     """
     Create a plate with a horizontal gradient
     Parameters:
@@ -507,21 +521,24 @@ def h_grad_plate(plate: int = 384,
     if flip is None:
         flip = random.sample([True, False], 1)[0]
     effect_plate = (
-        np.linspace(-sigma * 1.5, sigma * 1.5, plate)
-            .reshape(*shape[::-1])
-            .transpose()
+        np.linspace(-sigma * 1.5, sigma * 1.5, plate).reshape(*shape[::-1]).transpose()
     )
     if flip:
         effect_plate = np.flip(effect_plate, axis=1)
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="horizontal_gradient", size=plate)
+    return Plate(
+        data=data,
+        noise=noise_plate,
+        effect=effect_plate,
+        name="horizontal_gradient",
+        size=plate,
+    )
 
 
-def v_grad_plate(plate: int = 384,
-                 sigma: Optional[float] = None,
-                 flip: Optional[bool] = None) -> Plate:
+def v_grad_plate(
+    plate: int = 384, sigma: Optional[float] = None, flip: Optional[bool] = None
+) -> Plate:
     """
     Create a plate with a vertical gradient
     Parameters:
@@ -542,23 +559,27 @@ def v_grad_plate(plate: int = 384,
     shape = size2shape(plate)
     if flip is None:
         flip = random.sample([True, False], 1)[0]
-    effect_plate = (
-        np.linspace(-sigma * 1.5, sigma * 1.5, plate)
-            .reshape(*shape)
-    )
+    effect_plate = np.linspace(-sigma * 1.5, sigma * 1.5, plate).reshape(*shape)
     if flip:
         effect_plate = np.flip(effect_plate, axis=0)
     noise_plate = np.random.normal(loc=0, scale=sigma, size=shape)
     data = noise_plate + effect_plate
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="vertical_gradient", size=plate)
+    return Plate(
+        data=data,
+        noise=noise_plate,
+        effect=effect_plate,
+        name="vertical_gradient",
+        size=plate,
+    )
 
 
-def bleed_through_plate(plate: int = 384,
-                        prop: float = 0.05,
-                        high_vals: float = 35.0,
-                        spread: float = 0.75,
-                        sigma: Optional[float] = None) -> Plate:
+def bleed_through_plate(
+    plate: int = 384,
+    prop: float = 0.05,
+    high_vals: float = 35.0,
+    spread: float = 0.75,
+    sigma: Optional[float] = None,
+) -> Plate:
     """
     Create a plate with bleed-through artefacts where a strong signal in
     a well influences neighbouring wells.
@@ -593,15 +614,22 @@ def bleed_through_plate(plate: int = 384,
     data = noise_plate + effect_plate
     # FIXME: want the noise plate to also contain the high values, and the
     #        effect to only contain the bleed-through effect
-    return Plate(data=data, noise=noise_plate,
-                 effect=effect_plate, name="bleedthrough", size=plate)
+    return Plate(
+        data=data,
+        noise=noise_plate,
+        effect=effect_plate,
+        name="bleedthrough",
+        size=plate,
+    )
 
 
-def snake_plate(plate: int = 384,
-                sigma: Optional[float] = None,
-                row_wise: bool = True,
-                max_lim: float = 50.0,
-                direction: Optional[str] = None) -> Plate:
+def snake_plate(
+    plate: int = 384,
+    sigma: Optional[float] = None,
+    row_wise: bool = True,
+    max_lim: float = 50.0,
+    direction: Optional[str] = None,
+) -> Plate:
     """
     Create a plate with a snake-like pattern caused by sequentially
     dispensing into adjacent wells.
